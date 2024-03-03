@@ -1,8 +1,3 @@
-<script setup>
-import { RouterLink, RouterView } from 'vue-router'
-import HelloWorld from './components/HelloWorld.vue'
-</script>
-
 <template>
   <div>
     <div v-if="selectedCard === null">
@@ -32,25 +27,18 @@ export default {
       cards: [],
       selectedCard: null,
       answer: '',
-      categories: ['FIRST', 'SECOND', 'THIRD', 'FOURTH', 'FIFTH', 'SIXTH', 'SEVENTH', 'DONE'],
     };
   },
   methods: {
-    async selectCard(card) {
+    selectCard(card) {
       this.selectedCard = card;
     },
     async checkAnswer() {
-      if (this.answer === this.selectedCard.answer) {
-        const index = this.categories.indexOf(this.selectedCard.category);
-        if (index < this.categories.length - 1) {
-          const card = this.cards.find(card => card.question === this.selectedCard.question);
-          if (card) {
-            await axios.patch(`http://localhost:8000/cards/${card.id}/answer`, {
-              isValid: true,
-            });
-            this.selectedCard.category = this.categories[index + 1];
-          }
-        }
+      const card = this.cards.find(card => card.question === this.selectedCard.question);
+      if (card) {
+        await axios.patch(`http://localhost:8000/cards/${card.id}/answer`, {
+          isValid: this.answer === this.selectedCard.answer,
+        });
       }
       this.answer = '';
       this.selectedCard = null;
@@ -58,7 +46,11 @@ export default {
   },
   async created() {
     const response = await axios.get('http://localhost:8000/cards/quizz');
-    this.cards = response.data;
+    if (response.data && typeof response.data === 'object') {
+      this.cards = Object.values(response.data);
+    } else {
+      console.error('API did not return an object');
+    }
   },
 };
 </script>
